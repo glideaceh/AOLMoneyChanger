@@ -691,3 +691,470 @@
     #floating-toast.success i {
         color: #ffffff !important;
     }
+
+ /* STYLE DESAIN UNIFIED PROFILE CARD (MODERN & SMOOTH) */
+    .unified-profile-card {
+      position: relative;
+      background: linear-gradient(145deg, #ffffff, #f8fafc);
+      border: 1px solid rgba(226, 232, 240, 0.8);
+      border-radius: 24px;
+      padding: 1.5rem;
+      margin: 1.25rem;
+      box-shadow: 0 15px 35px -5px rgba(15, 23, 42, 0.05), 0 5px 15px rgba(0,0,0,0.03);
+      overflow: hidden;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      z-index: 1;
+    }
+    .unified-profile-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 20px 40px -5px rgba(15, 23, 42, 0.08), 0 8px 20px rgba(0,0,0,0.04);
+      border-color: rgba(37, 99, 235, 0.2);
+    }
+    .upc-bg-orb-1 {
+      position: absolute;
+      top: -30%;
+      right: -10%;
+      width: 150px;
+      height: 150px;
+      background: radial-gradient(circle, rgba(16, 185, 129, 0.15) 0%, rgba(255,255,255,0) 70%);
+      border-radius: 50%;
+      pointer-events: none;
+      animation: floatOrb 6s infinite ease-in-out alternate;
+    }
+    .upc-bg-orb-2 {
+      position: absolute;
+      bottom: -30%;
+      left: -10%;
+      width: 120px;
+      height: 120px;
+      background: radial-gradient(circle, rgba(37, 99, 235, 0.1) 0%, rgba(255,255,255,0) 70%);
+      border-radius: 50%;
+      pointer-events: none;
+      animation: floatOrb 8s infinite ease-in-out alternate-reverse;
+    }
+    @keyframes floatOrb {
+      0% { transform: translate(0, 0) scale(1); }
+      100% { transform: translate(15px, 20px) scale(1.1); }
+    }
+    .upc-content {
+      display: flex;
+      gap: 1.1rem;
+      position: relative;
+      z-index: 2;
+      align-items: center;
+    }
+    .upc-avatar-section {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.6rem;
+      flex-shrink: 0;
+    }
+    .upc-avatar-wrapper {
+      position: relative;
+      width: 70px;
+      height: 70px;
+      border-radius: 50%;
+      padding: 3px;
+      background: linear-gradient(135deg, #2563eb, #10b981, #2563eb);
+      background-size: 200% 200%;
+      animation: gradientBorder 3s ease infinite;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+    }
+    @keyframes gradientBorder {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    .upc-avatar {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 3px solid #ffffff;
+      background: #f1f5f9;
+    }
+    .upc-status-indicator {
+      position: absolute;
+      bottom: 2px;
+      right: 2px;
+      width: 16px;
+      height: 16px;
+      background: #10b981;
+      border: 2px solid #ffffff;
+      border-radius: 50%;
+    }
+    .upc-badge-premium {
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      color: #fff;
+      font-size: 0.65rem;
+      font-weight: 700;
+      padding: 0.2rem 0.6rem;
+      border-radius: 20px;
+      box-shadow: 0 4px 10px rgba(245, 158, 11, 0.3);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .upc-info-section {
+      display: flex;
+      flex-direction: column;
+      flex-grow: 1;
+      overflow: hidden;
+      justify-content: center;
+    }
+    .upc-greeting {
+      font-size: 0.75rem;
+      color: #64748b;
+      margin: 0 0 0.15rem 0;
+      font-weight: 500;
+    }
+    .upc-name {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: #0f172a;
+      margin: 0 0 0.6rem 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .upc-email-box {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      background: rgba(16, 185, 129, 0.05);
+      border: 1px solid rgba(16, 185, 129, 0.2);
+      padding: 0.5rem 0.65rem;
+      border-radius: 12px;
+      transition: all 0.3s;
+    }
+    .upc-email-box:hover {
+      background: rgba(16, 185, 129, 0.1);
+      border-color: rgba(16, 185, 129, 0.3);
+    }
+    .upc-email-icon {
+      position: relative;
+      width: 28px;
+      height: 28px;
+      background: linear-gradient(135deg, #10b981, #059669);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 0.75rem;
+      flex-shrink: 0;
+      box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3);
+    }
+    .upc-email-pulse {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      border: 2px solid #10b981;
+      animation: ripple 2s cubic-bezier(0.1, 0.8, 0.3, 1) infinite;
+    }
+    @keyframes ripple {
+      0% { transform: scale(1); opacity: 0.8; }
+      100% { transform: scale(1.55); opacity: 0; }
+    }
+    .upc-email-details {
+      display: flex;
+      flex-direction: column;
+      gap: 0.05rem;
+      overflow: hidden;
+    }
+    .upc-email-label {
+      font-size: 0.6rem;
+      font-weight: 700;
+      color: #10b981;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .upc-email-text {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #334155;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* STYLE TAB REKENING DOLLAR MODERN */
+    .modern-dollar-card {
+        background: linear-gradient(145deg, #ffffff, #f8fafc);
+        border: 1px solid rgba(226, 232, 240, 0.8);
+        box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.05);
+        padding: 1.25rem;
+        border-radius: 16px;
+        width:90%;
+        margin: 0 auto;
+    }
+    .dollar-card-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1.25rem;
+    }
+    .dollar-icon-wrap {
+        width: 48px;
+        height: 48px;
+        background: linear-gradient(135deg, #3b82f6, #2563eb);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.25rem;
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+        flex-shrink: 0;
+    }
+    .active-btn-qr {
+        background: linear-gradient(135deg, #ef4444, #dc2626) !important;
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3) !important;
+    }
+    .dollar-img-wrapper {
+        max-height: 0;
+        overflow: hidden;
+        transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        opacity: 0;
+        text-align: center;
+    }
+    .dollar-img-wrapper.show {
+        max-height: 450px; 
+        margin-top: 1.25rem;
+        opacity: 1;
+    }
+    .dollar-img {
+        max-width: 240px; 
+        width: 100%; 
+        height: auto; 
+        border-radius: 12px; 
+        margin: 0 auto; 
+        display: block; 
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15); 
+        border: 2px solid #e2e8f0;
+    }
+
+    /* STYLE HALAMAN INFORMASI MODERN, KEREN & SMOOTH */
+    .info-header-banner {
+      position: relative;
+      background: linear-gradient(135deg, #1e293b, #0f172a);
+      border-radius: 20px;
+      padding: 1.5rem;
+      color: #ffffff;
+      overflow: hidden;
+      margin-bottom: 1.25rem;
+      box-shadow: 0 12px 28px -5px rgba(15, 23, 42, 0.25);
+    }
+    .info-header-banner::before {
+      content: '';
+      position: absolute;
+      top: -40%;
+      right: -20%;
+      width: 180px;
+      height: 180px;
+      background: radial-gradient(circle, rgba(37, 99, 235, 0.35) 0%, rgba(0,0,0,0) 70%);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+    .info-banner-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(37, 99, 235, 0.25);
+      border: 1px solid rgba(59, 130, 246, 0.4);
+      color: #60a5fa;
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 0.25rem 0.65rem;
+      border-radius: 20px;
+      margin-bottom: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .info-banner-title {
+      font-size: 1.2rem;
+      font-weight: 800;
+      line-height: 1.35;
+      margin: 0 0 0.4rem 0;
+      color: #f8fafc;
+    }
+    .info-banner-desc {
+      font-size: 0.8rem;
+      color: #94a3b8;
+      margin: 0;
+      line-height: 1.45;
+    }
+
+    .info-filter-container {
+      display: flex;
+      gap: 0.5rem;
+      overflow-x: auto;
+      padding-bottom: 0.5rem;
+      margin-bottom: 1.25rem;
+    }
+    .info-filter-pill {
+      background: #ffffff;
+      color: #64748b;
+      border: 1px solid #e2e8f0;
+      padding: 0.45rem 0.9rem;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      white-space: nowrap;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .info-filter-pill.active {
+      background: linear-gradient(135deg, #2563eb, #1d4ed8);
+      color: #ffffff;
+      border-color: #2563eb;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+    }
+
+    .info-card {
+      background: #ffffff;
+      border: 1px solid rgba(226, 232, 240, 0.9);
+      border-radius: 18px;
+      padding: 1.15rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 8px 20px -4px rgba(15, 23, 42, 0.04);
+      transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+    .info-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 14px 28px -4px rgba(15, 23, 42, 0.08);
+      border-color: rgba(37, 99, 235, 0.3);
+    }
+    .info-card-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .info-tag {
+      font-size: 0.65rem;
+      font-weight: 700;
+      padding: 0.2rem 0.55rem;
+      border-radius: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+    .tag-blue { background: rgba(37, 99, 235, 0.1); color: #2563eb; }
+    .tag-green { background: rgba(16, 185, 129, 0.1); color: #059669; }
+    .tag-purple { background: rgba(147, 51, 234, 0.1); color: #7e22ce; }
+    .tag-orange { background: rgba(245, 158, 11, 0.1); color: #d97706; }
+
+    .info-date {
+      font-size: 0.7rem;
+      color: #94a3b8;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .info-card-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #0f172a;
+      line-height: 1.4;
+      margin: 0;
+    }
+    .info-card-snippet {
+      font-size: 0.78rem;
+      color: #64748b;
+      line-height: 1.48;
+      margin: 0;
+    }
+    .info-card-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-top: 1px dashed #f1f5f9;
+      padding-top: 0.65rem;
+      margin-top: 0.2rem;
+    }
+    .info-author {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.72rem;
+      color: #475569;
+      font-weight: 600;
+    }
+    .info-author-icon {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: #e2e8f0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.65rem;
+      color: #2563eb;
+    }
+    .btn-read-more {
+      background: none;
+      border: none;
+      color: #2563eb;
+      font-size: 0.75rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      padding: 0;
+      transition: all 0.25s ease;
+    }
+    .btn-read-more:hover {
+      gap: 7px;
+      color: #1d4ed8;
+    }
+
+    /* Modal Baca Artikel */
+    .article-modal-body {
+      padding: 0.25rem 0;
+    }
+    .article-detail-tag {
+      display: inline-block;
+      margin-bottom: 0.5rem;
+    }
+    .article-detail-title {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: #0f172a;
+      line-height: 1.35;
+      margin-bottom: 0.5rem;
+    }
+    .article-detail-meta {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 0.72rem;
+      color: #64748b;
+      margin-bottom: 1.15rem;
+      padding-bottom: 0.65rem;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .article-detail-content {
+      font-size: 0.83rem;
+      color: #334155;
+      line-height: 1.65;
+    }
+    .article-detail-content p {
+      margin-bottom: 0.85rem;
+    }
+    .article-highlight-box {
+      background: linear-gradient(135deg, rgba(37, 99, 235, 0.06), rgba(16, 185, 129, 0.06));
+      border-left: 4px solid #2563eb;
+      padding: 0.85rem 1rem;
+      border-radius: 0 12px 12px 0;
+      margin: 1rem 0;
+      font-size: 0.8rem;
+      color: #1e293b;
+      font-weight: 500;
+    }
