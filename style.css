@@ -1158,3 +1158,110 @@
       color: #1e293b;
       font-weight: 500;
     }
+
+    /* CSS TAMBAHAN UNTUK HALAMAN LAPORAN (MODERN & SMOOTH) */
+    .laporan-cards-wrapper {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    .laporan-card {
+        flex: 1;
+        padding: 1.25rem;
+        border-radius: 16px;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+        color: #fff;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        transition: transform 0.3s ease;
+    }
+    .laporan-card:active {
+        transform: scale(0.96);
+    }
+    .l-beli {
+        background: linear-gradient(135deg, #10b981, #059669);
+    }
+    .l-jual {
+        background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    }
+    .l-icon {
+        font-size: 1.5rem;
+        margin-bottom: 0.75rem;
+        background: rgba(255, 255, 255, 0.2);
+        width: max-content;
+        padding: 0.5rem;
+        border-radius: 10px;
+    }
+    .l-title {
+        font-size: 0.75rem;
+        font-weight: 500;
+        opacity: 0.9;
+        margin: 0 0 0.25rem 0;
+    }
+    .l-value {
+        font-size: 1.15rem;
+        font-weight: 700;
+        margin: 0;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        overflow: hidden;
+    }
+    .l-orb-1, .l-orb-2 {
+        position: absolute;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.1);
+    }
+    .l-orb-1 { width: 80px; height: 80px; top: -20px; right: -20px; }
+    .l-orb-2 { width: 60px; height: 60px; bottom: -10px; right: 40px; }
+
+    .laporan-chart-container, .laporan-insight-container {
+        background: #fff;
+        padding: 1.25rem;
+        border-radius: 16px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.04);
+        margin-bottom: 1.5rem;
+        border: 1px solid rgba(0,0,0,0.02);
+    }
+    .l-chart-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.5rem;
+    }
+    .l-chart-header h3 {
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: #1e293b;
+        margin: 0;
+    }
+    .l-badge {
+        font-size: 0.65rem;
+        background: #f8fafc;
+        color: #64748b;
+        padding: 0.35rem 0.6rem;
+        border-radius: 8px;
+        font-weight: 600;
+        border: 1px solid #e2e8f0;
+    }
+    .insight-title {
+        font-size: 0.95rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        color: #0f172a;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .insight-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.85rem 0;
+        border-bottom: 1px dashed #e2e8f0;
+    }
+    .insight-item:last-child { border-bottom: none; padding-bottom: 0; }
+    .insight-label { font-size: 0.85rem; color: #64748b; display: flex; align-items: center; gap: 0.5rem;}
+    .insight-value { font-size: 0.85rem; font-weight: 600; color: #0f172a; background: #f1f5f9; padding: 0.25rem 0.5rem; border-radius: 6px;}
