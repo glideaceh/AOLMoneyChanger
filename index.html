@@ -9,6 +9,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/glideaceh/MCAPPGASS/style.css"> 
   <style>
  @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
     
@@ -535,21 +536,36 @@
     }
     .status-success {
         background: #dcfce7;
-        color: #16a34a;
+        color: #16a34a;font-weight: 700;
     }
-    .status-pending {
-        background: #fef3c7;
-        color: #d97706;
+     .status-pending {
+        background: rgba(255, 239, 213);
+        color: 	#FF4500; font-weight: 700;
     }
     .status-proses {
-        background: rgba(249, 115, 22, 0.15);
-        color: #ea580c;
+        background: rgba(255, 250, 205);
+        color:#FFA500; font-weight: 700;
     }
     .status-batal {
         background: #fee2e2;
         color: #dc2626;
     }
-    
+.tx-aktif-card {
+          background: #ffffff; border-radius: 16px; padding: 1.25rem; margin-bottom: 1rem;
+          box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
+          border: 1px solid #f1f5f9; transition: all 0.3s ease; position: relative; overflow: hidden;
+      }
+      .tx-aktif-card::before {
+          content: ""; position: absolute; top: 0; left: 0; width: 4.5px; height: 100%; background: #DCDCDC; 
+      }
+      .tx-aktif-card.proses-card::before { background: #EEE8AA; }
+      .tx-aktif-card:active { transform: scale(0.98); }
+      .tx-aktif-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px dashed #e2e8f0; padding-bottom: 0.75rem; }
+      .tx-aktif-id { font-size: 0.8rem; color: #64748b; font-weight: 600; letter-spacing: 0.5px;}
+      .tx-aktif-body { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; }
+      .tx-aktif-footer { display: flex; justify-content: space-between; align-items: center; background: #f8fafc; padding: 0.85rem; border-radius: 12px; border: 1px solid #e2e8f0;}
+      .timer-aktif { font-size: 0.85rem; color: #ef4444; font-weight: 700; display: flex; align-items: center; gap: 6px;}
+
     /* BADGE NOTIFIKASI */
     .notif-btn {
         position: relative;
@@ -1277,23 +1293,7 @@
     .insight-item:last-child { border-bottom: none; padding-bottom: 0; }
     .insight-label { font-size: 0.85rem; color: #64748b; display: flex; align-items: center; gap: 0.5rem;}
     .insight-value { font-size: 0.85rem; font-weight: 600; color: #0f172a; background: #f1f5f9; padding: 0.25rem 0.5rem; border-radius: 6px;}
-    
-.tx-aktif-card {
-          background: #ffffff; border-radius: 16px; padding: 1.25rem; margin-bottom: 1rem;
-          box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
-          border: 1px solid #f1f5f9; transition: all 0.3s ease; position: relative; overflow: hidden;
-      }
-      .tx-aktif-card::before {
-          content: ""; position: absolute; top: 0; left: 0; width: 4.5px; height: 100%; background: #DCDCDC; 
-      }
-      .tx-aktif-card.proses-card::before { background: #DCDCDC; }
-      .tx-aktif-card:active { transform: scale(0.98); }
-      .tx-aktif-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px dashed #e2e8f0; padding-bottom: 0.75rem; }
-      .tx-aktif-id { font-size: 0.8rem; color: #64748b; font-weight: 600; letter-spacing: 0.5px;}
-      .tx-aktif-body { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; }
-      .tx-aktif-footer { display: flex; justify-content: space-between; align-items: center; background: #f8fafc; padding: 0.85rem; border-radius: 12px; border: 1px solid #e2e8f0;}
-      .timer-aktif { font-size: 0.85rem; color: #ef4444; font-weight: 700; display: flex; align-items: center; gap: 6px;}
-  
+
   /* CSS Khusus ATM Card Modern */
     .atm-card-wrapper {
         perspective: 1000px;
@@ -1441,7 +1441,6 @@
         0%, 100% { opacity: 0.5; }
         50% { opacity: 1; text-shadow: 0 0 10px rgba(255,255,255,0.6); }
     }
-    /* --- END CSS BARU --- */
   </style>
 </head>
 <body>
@@ -1696,7 +1695,7 @@
           <div class="brand-icon shiny-sweep">
             <i class="fa-solid fa-arrow-right-arrow-left"></i>
           </div>
-          <span class="brand-text">AOLMoney<span>Changer</span></span>
+          <span class="brand-text">Money<span>Changer</span></span>
         </div>
         <button class="notif-btn" onclick="openPendingList()">
           <i class="fa-regular fa-bell"></i>
@@ -2232,7 +2231,7 @@
             </div>
 
             <div class="receipt-card fade-in-up delay-1">
-                <div class="receipt-header"><h3>Detail Pesanan</h3><p id="det-trx-id">Trx ID: #MC-000000X</p></div>
+                <div class="receipt-header"><h3>Detail Pesanan</h3><p id="det-trx-id">Trx ID: AMC000000X</p></div>
                 <div class="receipt-row"><span class="receipt-label">Mata Uang</span><span class="receipt-value" id="det-mata-uang">USD</span></div>
                 <div class="receipt-row"><span class="receipt-label">Kurs / Rate</span><span class="receipt-value" id="det-rate">-</span></div>
                 <div class="receipt-row"><span class="receipt-label">Estimasi Diterima</span><span class="receipt-value" style="color: #10b981;" id="det-diterima">-</span></div>
@@ -2468,6 +2467,10 @@
       let resendInterval = null;
       let currentForgotEmail = '';
       
+      // --- TAMBAHAN REALTIME STATE ---
+let knownActiveTxs = {}; // Menyimpan status transaksi aktif
+let activeTxPolling = null; // Interval polling realtime
+      
       // Variable untuk fitur resend OTP registrasi
       let currentRegUser = '';
       let currentRegEmail = '';
@@ -2475,6 +2478,66 @@
 
       // Variable Grafik Laporan
       let laporanChartInstance = null;
+
+// --- FUNGSI POLLING REALTIME UNTUK CEK STATUS ADMIN ---
+function startRealtimePolling() {
+    if (activeTxPolling) clearInterval(activeTxPolling);
+    // Cek update dari database setiap 8 detik agar tidak membebani server GAS
+    activeTxPolling = setInterval(pollForAdminUpdates, 8000);
+}
+
+async function pollForAdminUpdates() {
+    const username = localStorage.getItem('userUsername');
+    if (!username) return;
+    
+    const formData = new URLSearchParams();
+    formData.append('action', 'get_transaksi');
+    formData.append('username', username);
+    
+    try {
+        const response = await fetch(GAS_URL, { method: 'POST', body: formData });
+        const result = await response.json();
+        
+        if (result.status === 'success' && result.data) {
+            let needsUIUpdate = false;
+            
+            result.data.forEach(tx => {
+                const txId = tx.idPesanan;
+                const newStatus = (tx.status || '').trim().toLowerCase();
+                
+                // Jika sebelumnya statusnya pending/proses dan sekarang berubah selesai/berhasil di sheet
+                if (knownActiveTxs[txId] && (knownActiveTxs[txId] === 'pending' || knownActiveTxs[txId] === 'proses') &&
+                    (newStatus === 'selesai' || newStatus === 'berhasil' || newStatus === 'success')) {
+                    
+                    // Munculkan notifikasi realtime sesuai permintaan
+                    const kategori = tx.kategori || 'Transaksi';
+                    const mataUang = tx.mataUang || '';
+                    // Asumsi fungsi showToast sudah ada di script Anda sebelumnya
+                     if (result.status === 'success') {
+                    showToast(`${tx.kategori} mata uang ${mataUang}/IDR anda telah dikonfirmasi oleh admin`, 'success');
+                    needsUIUpdate = true;
+                     }
+                }
+                
+                // Perbarui state lokal
+                if (newStatus === 'pending' || newStatus === 'proses') {
+                    knownActiveTxs[txId] = newStatus;
+                } else {
+                    delete knownActiveTxs[txId];
+                }
+            });
+            
+            // Jika ada yang selesai, render ulang tampilan tanpa refresh halaman
+            if (needsUIUpdate) {
+                loadTransactions();
+                fetchPendingData();
+            }
+        }
+    } catch (e) {
+        console.log("Menunggu koneksi stabil untuk realtime...", e);
+    }
+}
+// -----------------------------------------------------
 
      function startGlobalTicker() {
           if (mainTicker) clearInterval(mainTicker);
@@ -2593,6 +2656,7 @@
               authView.style.display = 'none';
               loadCurrencyData();
               fetchPendingData();
+              startRealtimePolling();
           }
       }
 
@@ -2702,44 +2766,48 @@ function switchTab(tab) {
           return `${day} ${monthName} ${year}. ${hh}:${mm}`;
       }
 
-      function renderTransactionLists(transactions) {
-          const containerRiwayat = document.getElementById('tx-list-container');
-          const containerAktif = document.getElementById('tx-aktif-list-container');
-
-          if(containerRiwayat) containerRiwayat.innerHTML = '';
-          if(containerAktif) containerAktif.innerHTML = '';
-
-          let countRiwayat = 0;
-          let countAktif = 0;
-
-          transactions.slice().reverse().forEach(tx => {
-              const statusStr = (tx.status || 'Pending').trim().toLowerCase();
-              const isSelesai = (statusStr === 'berhasil' || statusStr === 'selesai' || statusStr === 'success');
-              const isAktif = (statusStr === 'pending' || statusStr === 'proses');
-
-              if (isSelesai) {
-                  renderSingleTxRiwayat(tx, containerRiwayat);
-                  countRiwayat++;
-              } else if (isAktif) {
-                  renderSingleTxAktif(tx, containerAktif);
-                  countAktif++;
-              }
-          });
-
-          if(countRiwayat === 0 && containerRiwayat) {
-              containerRiwayat.innerHTML = '<div style="text-align:center; padding: 3rem 1rem; color: #94a3b8;"><p style="margin:0; font-weight:600;">Belum Ada Riwayat Selesai</p></div>';
-          }
-          if(countAktif === 0 && containerAktif) {
-              containerAktif.innerHTML = '<div style="text-align:center; padding: 3rem 1rem; color: #94a3b8;"><i class="fa-solid fa-clipboard-check" style="font-size: 2.5rem; margin-bottom: 0.75rem; color:#cbd5e1;"></i><p style="margin:0; font-weight:600;">Tidak Ada Transaksi Aktif</p><p style="font-size:0.8rem; margin-top:4px;">Semua pesanan sudah selesai.</p></div>';
-          }
-
-          const activeFilterBtn = document.querySelector('.tx-filter-btn.active');
-          if (activeFilterBtn) {
-              const activeCat = activeFilterBtn.getAttribute('onclick').match(/'([^']+)'/)[1];
-              filterTransaksi(activeCat, activeFilterBtn);
-          }
-      }
-
+     function renderTransactionLists(transactions) {
+    const containerRiwayat = document.getElementById('tx-list-container');
+    const containerAktif = document.getElementById('tx-aktif-list-container');
+    
+    if (containerRiwayat) containerRiwayat.innerHTML = '';
+    if (containerAktif) containerAktif.innerHTML = '';
+    
+    let countRiwayat = 0;
+    let countAktif = 0;
+    
+    transactions.slice().reverse().forEach(tx => {
+        const statusStr = (tx.status || 'Pending').trim().toLowerCase();
+        const isSelesai = (statusStr === 'berhasil' || statusStr === 'selesai' || statusStr === 'success');
+        const isAktif = (statusStr === 'pending' || statusStr === 'proses');
+        
+        // Daftarkan ke state lokal untuk dipantau realtime
+        if (isAktif) {
+            knownActiveTxs[tx.idPesanan] = statusStr;
+        }
+        
+        if (isSelesai) {
+            renderSingleTxRiwayat(tx, containerRiwayat);
+            countRiwayat++;
+        } else if (isAktif) {
+            renderSingleTxAktif(tx, containerAktif);
+            countAktif++;
+        }
+    });
+    
+    if (countRiwayat === 0 && containerRiwayat) {
+        containerRiwayat.innerHTML = '<div style="text-align:center; padding: 3rem 1rem; color: #94a3b8;"><p style="margin:0; font-weight:600;">Belum Ada Riwayat Selesai</p></div>';
+    }
+    if (countAktif === 0 && containerAktif) {
+        containerAktif.innerHTML = '<div style="text-align:center; padding: 3rem 1rem; color: #94a3b8;"><i class="fa-solid fa-clipboard-check" style="font-size: 2.5rem; margin-bottom: 0.75rem; color:#cbd5e1;"></i><p style="margin:0; font-weight:600;">Tidak Ada Transaksi Aktif</p><p style="font-size:0.8rem; margin-top:4px;">Semua pesanan sudah selesai.</p></div>';
+    }
+    
+    const activeFilterBtn = document.querySelector('.tx-filter-btn.active');
+    if (activeFilterBtn) {
+        const activeCat = activeFilterBtn.getAttribute('onclick').match(/'([^']+)'/)[1];
+        filterTransaksi(activeCat, activeFilterBtn);
+    }
+}
       function renderSingleTxRiwayat(tx, container) {
           const kat = (tx.kategori || 'Beli').trim();
           const katLower = kat.toLowerCase();
@@ -2840,12 +2908,12 @@ function switchTab(tab) {
           if (isPending) {
               card.onclick = () => openPendingCheckoutFromData(tx);
           } else {
-              card.onclick = () => showToast('Pesanan anda sedang dalam proses peninjauan Admin.', 'info');
+              card.onclick = () => showToast("Pesanan anda sedang dalam proses peninjauan Admin.", "info");
           }
 
           card.innerHTML = `
               <div class="tx-aktif-header">
-                  <span class="tx-aktif-id">Trx ID: #${tx.idPesanan}</span>
+                  <span class="tx-aktif-id">Trx ID: ${tx.idPesanan}</span>
                   <span class="tx-status-badge ${badgeClass}">${statusStr}</span>
               </div>
               <div class="tx-aktif-body">
@@ -3268,7 +3336,7 @@ function switchTab(tab) {
                estimasiVal = 'Rp. ' + numericVal.toLocaleString('id-ID');
           }
 
-          document.getElementById('det-trx-id').innerText = `Trx ID: #${tx.idPesanan || '-'}`;
+          document.getElementById('det-trx-id').innerText = `Trx ID: ${tx.idPesanan || '-'}`;
           document.getElementById('det-mata-uang').innerText = currencyCode;
           
           let rateText = '-';
@@ -3830,7 +3898,7 @@ function switchTab(tab) {
               document.getElementById('det-admin').innerText = `Rp ${adminFee.toLocaleString('id-ID')}`;
               document.getElementById('det-total').innerText = `Rp ${totalBayar.toLocaleString('id-ID')}`;
           }
-          document.getElementById('det-trx-id').innerText = `Trx ID: #${idPesanan}`;
+          document.getElementById('det-trx-id').innerText = `Trx ID: ${idPesanan}`;
           
           activeExpirations[idPesanan] = remainingSec || 900; 
           document.getElementById('page-detail-pembayaran').classList.add('open');
@@ -3864,7 +3932,7 @@ function switchTab(tab) {
               document.getElementById('det-admin').innerText = `Rp ${adminFee.toLocaleString('id-ID')}`;
               document.getElementById('det-total').innerText = `Rp ${totalBayar.toLocaleString('id-ID')}`;
           }
-          document.getElementById('det-trx-id').innerText = `Trx ID: #${idPesanan}`;
+          document.getElementById('det-trx-id').innerText = `Trx ID: ${idPesanan}`;
           
           activeExpirations[idPesanan] = remainingSec || 900; 
           document.getElementById('page-detail-pembayaran').classList.add('open');
@@ -4386,7 +4454,7 @@ async function handleSaveProfil(e) {
         const result = await response.json();
         
         if (result.status === 'success') {
-            showToast("Profil berhasil diperbarui!");
+            showToast('Profil berhasil diperbarui!', 'success');
             
             // Update data di penyimpanan lokal HP user
             localStorage.setItem('userName', nama);
