@@ -9,7 +9,6 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/glideaceh/MCAPPGASS/style.css"> 
   <style>
  @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
     
@@ -2457,7 +2456,7 @@
 </div>
 
   </div>
-
+  
   <script>
       const GAS_URL = "https://script.google.com/macros/s/AKfycbyNnLofyb4NVWXdnnMDxQEUDv6Ui2h4qOPJScc3SFQuRBDST3I63iFakJ7ds8PnKzKLEA/exec";
 
@@ -2465,11 +2464,13 @@
       let activeExpirations = {}; 
       let mainTicker = null;
       let resendInterval = null;
+      let globalBiayaAdminUSD = 0;
+      let globalBiayaAdminIDR = 0;
       let currentForgotEmail = '';
       
       // --- TAMBAHAN REALTIME STATE ---
-let knownActiveTxs = {}; // Menyimpan status transaksi aktif
-let activeTxPolling = null; // Interval polling realtime
+      let knownActiveTxs = {}; // Menyimpan status transaksi aktif
+      let activeTxPolling = null; // Interval polling realtime
       
       // Variable untuk fitur resend OTP registrasi
       let currentRegUser = '';
@@ -2479,11 +2480,47 @@ let activeTxPolling = null; // Interval polling realtime
       // Variable Grafik Laporan
       let laporanChartInstance = null;
 
+// Fungsi mengambil data biaya admin dari server
+async function fetchBiayaAdmin() {
+    try {
+        const formData = new URLSearchParams();
+        formData.append('action', 'get_biaya_admin');
+        
+        const response = await fetch(GAS_URL, { method: 'POST', body: formData });
+        const result = await response.json();
+        
+        if (result.status === 'success') {
+            globalBiayaAdminUSD = result.biayaUSD;
+            globalBiayaAdminIDR = result.biayaIDR;
+        }
+    } catch (e) {
+        console.log("Gagal memuat data Biaya Admin", e);
+    }
+}
+
+// Jalankan pengambilan biaya admin saat aplikasi pertama kali dimuat
+fetchBiayaAdmin();
+
+// Fungsi untuk menentukan nominal layanan berdasarkan mata uang
+function getBiayaLayananDynamic(mataUang) {
+    if (mataUang === 'USD') {
+        return globalBiayaAdminUSD;
+    } else if (mataUang === 'IDR') {
+        return globalBiayaAdminIDR;
+    }
+    return 0; // Default jika error
+}
+// --- AKHIR SCRIPT BIAYA ADMIN ---
+
+// --- STATE TAMBAHAN UNTUK ANTI-FLICKER ---
+window.lastTxDataHash = "";
+window.lastPendingHash = "";
+
 // --- FUNGSI POLLING REALTIME UNTUK CEK STATUS ADMIN ---
 function startRealtimePolling() {
     if (activeTxPolling) clearInterval(activeTxPolling);
-    // Cek update dari database setiap 8 detik agar tidak membebani server GAS
-    activeTxPolling = setInterval(pollForAdminUpdates, 8000);
+    // Polling setiap 5 detik dengan metode Silent Update di background
+    activeTxPolling = setInterval(pollForAdminUpdates, 5000);
 }
 
 async function pollForAdminUpdates() {
@@ -2499,27 +2536,20 @@ async function pollForAdminUpdates() {
         const result = await response.json();
         
         if (result.status === 'success' && result.data) {
-            let needsUIUpdate = false;
+            let newDataHash = JSON.stringify(result.data);
             
             result.data.forEach(tx => {
                 const txId = tx.idPesanan;
                 const newStatus = (tx.status || '').trim().toLowerCase();
                 
-                // Jika sebelumnya statusnya pending/proses dan sekarang berubah selesai/berhasil di sheet
                 if (knownActiveTxs[txId] && (knownActiveTxs[txId] === 'pending' || knownActiveTxs[txId] === 'proses') &&
                     (newStatus === 'selesai' || newStatus === 'berhasil' || newStatus === 'success')) {
                     
-                    // Munculkan notifikasi realtime sesuai permintaan
-                    const kategori = tx.kategori || 'Transaksi';
-                    const mataUang = tx.mataUang || '';
-                    // Asumsi fungsi showToast sudah ada di script Anda sebelumnya
-                     if (result.status === 'success') {
-                    showToast(`${tx.kategori} mata uang ${mataUang}/IDR anda telah dikonfirmasi oleh admin`, 'success');
-                    needsUIUpdate = true;
-                     }
+                    if (typeof showToast === 'function') {
+                        showToast(`${tx.kategori} mata uang ${tx.mataUang}/IDR anda telah dikonfirmasi oleh admin`, 'success');
+                    }
                 }
                 
-                // Perbarui state lokal
                 if (newStatus === 'pending' || newStatus === 'proses') {
                     knownActiveTxs[txId] = newStatus;
                 } else {
@@ -2527,138 +2557,169 @@ async function pollForAdminUpdates() {
                 }
             });
             
-            // Jika ada yang selesai, render ulang tampilan tanpa refresh halaman
-            if (needsUIUpdate) {
-                loadTransactions();
-                fetchPendingData();
+            // Anti-Flicker: Update DOM HTML HANYA jika terjadi perubahan data pada server
+            if (window.lastTxDataHash !== newDataHash) {
+                window.lastTxDataHash = newDataHash;
+                
+                // Render list transaksi secara silent
+                if (result.data.length > 0) {
+                    if (typeof renderTransactionLists === 'function') {
+                        renderTransactionLists(result.data);
+                    }
+                } else {
+                    renderEmptyTransactions();
+                }
+                
+                // Update Badge & List secara silent
+                updatePendingStateSilently(result.data);
             }
         }
     } catch (e) {
-        console.log("Menunggu koneksi stabil untuk realtime...", e);
+        console.log("Menunggu koneksi stabil untuk silent update...", e);
+    }
+}
+
+function renderEmptyTransactions() {
+    const containerRiwayat = document.getElementById('tx-list-container');
+    const containerAktif = document.getElementById('tx-aktif-list-container');
+    if (containerRiwayat) containerRiwayat.innerHTML = '<div style="text-align:center; padding: 3rem 1rem; color: #94a3b8;"><i class="fa-solid fa-folder-open" style="font-size: 2.5rem; margin-bottom: 0.75rem; color:#cbd5e1;"></i><p style="margin:0; font-weight:600;">Belum Ada Riwayat Selesai</p></div>';
+    if (containerAktif) containerAktif.innerHTML = '<div style="text-align:center; padding: 3rem 1rem; color: #94a3b8;"><i class="fa-solid fa-clipboard-check" style="font-size: 2.5rem; margin-bottom: 0.75rem; color:#cbd5e1;"></i><p style="margin:0; font-weight:600;">Tidak Ada Transaksi Aktif</p><p style="font-size:0.8rem; margin-top:4px;">Semua pesanan sudah selesai.</p></div>';
+}
+
+function updatePendingStateSilently(allData) {
+    const pendings = allData.filter(tx => tx.status.toLowerCase() === 'pending' && tx.remainingSec > 0);
+    
+    const badge = document.getElementById('notif-badge-count');
+    if (badge) {
+        if (pendings.length > 0) {
+            badge.innerText = pendings.length;
+            badge.style.display = 'flex';
+        } else {
+            badge.style.display = 'none';
+        }
+    }
+    
+    pendings.forEach(tx => {
+        if (!activeExpirations[tx.idPesanan] || Math.abs(activeExpirations[tx.idPesanan] - tx.remainingSec) > 10) {
+            activeExpirations[tx.idPesanan] = tx.remainingSec;
+        }
+    });
+    
+    const pendingIds = pendings.map(t => t.idPesanan);
+    Object.keys(activeExpirations).forEach(id => {
+        if (!pendingIds.includes(id)) {
+            delete activeExpirations[id];
+        }
+    });
+    
+    const newPendingHash = JSON.stringify(pendings);
+    if (document.getElementById('page-pending-list') && document.getElementById('page-pending-list').classList.contains('open')) {
+        if (window.lastPendingHash !== newPendingHash) {
+            window.lastPendingHash = newPendingHash;
+            if (typeof renderPendingList === 'function') {
+                renderPendingList(pendings);
+            }
+        }
+    } else {
+        window.lastPendingHash = newPendingHash;
     }
 }
 // -----------------------------------------------------
 
      function startGlobalTicker() {
-          if (mainTicker) clearInterval(mainTicker);
-          mainTicker = setInterval(() => {
-              let needsRefresh = false;
-              for (let id in activeExpirations) {
-                  if (activeExpirations[id] > 0) {
-                      activeExpirations[id]--;
-                      
-                      if (id === activeTxId && document.getElementById('page-detail-pembayaran').classList.contains('open')) {
-                          let mins = Math.floor(activeExpirations[id] / 60);
-                          let secs = activeExpirations[id] % 60;
-                          document.getElementById('countdown-timer').innerText = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
-                      }
+    if (mainTicker) clearInterval(mainTicker);
+    mainTicker = setInterval(() => {
+        let needsRefresh = false;
+        for (let id in activeExpirations) {
+            if (activeExpirations[id] > 0) {
+                activeExpirations[id]--;
+                
+                if (id === activeTxId && document.getElementById('page-detail-pembayaran').classList.contains('open')) {
+                    let mins = Math.floor(activeExpirations[id] / 60);
+                    let secs = activeExpirations[id] % 60;
+                    document.getElementById('countdown-timer').innerText = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+                }
+                
+                if (document.getElementById('page-pending-list').classList.contains('open')) {
+                    const timerEl = document.getElementById(`notif-timer-${id}`);
+                    if (timerEl) {
+                        let mins = Math.floor(activeExpirations[id] / 60);
+                        let secs = activeExpirations[id] % 60;
+                        timerEl.innerText = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+                    }
+                }
+                
+                const timerAktifEl = document.getElementById(`aktif-timer-${id}`);
+                if (timerAktifEl) {
+                    let mins = Math.floor(activeExpirations[id] / 60);
+                    let secs = activeExpirations[id] % 60;
+                    timerAktifEl.innerHTML = `<i class="fa-regular fa-clock fa-spin" style="animation-duration: 3s;"></i> ${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+                }
+                
+                if (activeExpirations[id] <= 0) {
+                    showToast(`Waktu pembayaran pesanan #${id} telah habis.`);
+                    delete activeExpirations[id];
+                    needsRefresh = true;
+                    
+                    if (id === activeTxId) {
+                        activeTxId = "";
+                        if (document.getElementById('page-detail-pembayaran').classList.contains('open')) {
+                            document.getElementById('countdown-timer').innerText = "Kadaluarsa";
+                            setTimeout(() => closeAllToHome(), 1500);
+                        }
+                    }
+                }
+            }
+        }
+        
+        if (needsRefresh) {
+            fetchPendingData();
+            if ((document.getElementById('main-transaksi-page') && document.getElementById('main-transaksi-page').style.display !== 'none') ||
+                (document.getElementById('main-transaksi-aktif-page') && document.getElementById('main-transaksi-aktif-page').style.display !== 'none')) {
+                loadTransactions();
+            }
+        }
+    }, 1000);
+}
 
-                      if (document.getElementById('page-pending-list').classList.contains('open')) {
-                          const timerEl = document.getElementById(`notif-timer-${id}`);
-                          if (timerEl) {
-                              let mins = Math.floor(activeExpirations[id] / 60);
-                              let secs = activeExpirations[id] % 60;
-                              timerEl.innerText = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
-                          }
-                      }
+function resetCheckoutState() {
+    activeTxId = "";
+}
 
-                      // Update live timer di halaman Transaksi Aktif
-                      const timerAktifEl = document.getElementById(`aktif-timer-${id}`);
-                      if (timerAktifEl) {
-                          let mins = Math.floor(activeExpirations[id] / 60);
-                          let secs = activeExpirations[id] % 60;
-                          timerAktifEl.innerHTML = `<i class="fa-regular fa-clock fa-spin" style="animation-duration: 3s;"></i> ${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
-                      }
-
-                      if (activeExpirations[id] <= 0) {
-                          showToast(`Waktu pembayaran pesanan #${id} telah habis.`);
-                          delete activeExpirations[id];
-                          needsRefresh = true;
-                          
-                          if (id === activeTxId) {
-                              activeTxId = "";
-                              if (document.getElementById('page-detail-pembayaran').classList.contains('open')) {
-                                  document.getElementById('countdown-timer').innerText = "Kadaluarsa";
-                                  setTimeout(() => closeAllToHome(), 1500);
-                              }
-                          }
-                      }
-                  }
-              }
-              
-              if (needsRefresh) {
-                  fetchPendingData();
-                  if((document.getElementById('main-transaksi-page') && document.getElementById('main-transaksi-page').style.display !== 'none') ||
-                     (document.getElementById('main-transaksi-aktif-page') && document.getElementById('main-transaksi-aktif-page').style.display !== 'none')) {
-                      loadTransactions();
-                  }
-              }
-          }, 1000);
-      }
-      
-      function resetCheckoutState() {
-          activeTxId = "";
-      }
-
-      async function fetchPendingData() {
-          const username = localStorage.getItem('userUsername');
-          if(!username) return;
-
-          const formData = new URLSearchParams();
-          formData.append('action', 'get_transaksi');
-          formData.append('username', username);
-
-          try {
-              const response = await fetch(GAS_URL, { method: 'POST', body: formData });
-              const result = await response.json();
-
-              if (result.status === 'success') {
-                  const pendings = result.data.filter(tx => tx.status.toLowerCase() === 'pending' && tx.remainingSec > 0);
-                  
-                  const badge = document.getElementById('notif-badge-count');
-                  if (pendings.length > 0) {
-                      badge.innerText = pendings.length;
-                      badge.style.display = 'flex';
-                  } else {
-                      badge.style.display = 'none';
-                  }
-
-                  pendings.forEach(tx => {
-                      if (!activeExpirations[tx.idPesanan] || Math.abs(activeExpirations[tx.idPesanan] - tx.remainingSec) > 10) {
-                          activeExpirations[tx.idPesanan] = tx.remainingSec;
-                      }
-                  });
-                  
-                  const pendingIds = pendings.map(t => t.idPesanan);
-                  Object.keys(activeExpirations).forEach(id => {
-                      if (!pendingIds.includes(id)) {
-                          delete activeExpirations[id];
-                      }
-                  });
-
-                  if (document.getElementById('page-pending-list').classList.contains('open')) {
-                      renderPendingList(pendings);
-                  }
-              }
-          } catch(e) { console.error("Gagal memuat pending data realtime", e); }
-      }
+async function fetchPendingData() {
+    const username = localStorage.getItem('userUsername');
+    if (!username) return;
+    
+    const formData = new URLSearchParams();
+    formData.append('action', 'get_transaksi');
+    formData.append('username', username);
+    
+    try {
+        const response = await fetch(GAS_URL, { method: 'POST', body: formData });
+        const result = await response.json();
+        
+        if (result.status === 'success' && result.data) {
+            updatePendingStateSilently(result.data);
+        }
+    } catch (e) { console.error("Gagal memuat pending data realtime", e); }
+}
 
       function checkAuth() {
-          const isLoggedIn = localStorage.getItem('isLoggedIn');
-          if(isLoggedIn === 'true') {
-              const userName = localStorage.getItem('userName') || 'Pengguna';
-              const userEmail = localStorage.getItem('userEmail') || 'email@terverifikasi.com';
-              document.getElementById('display-user-name').innerText = userName;
-              if(document.getElementById('profile-display-name')){ document.getElementById('profile-display-name').innerText = userName; }
-              if(document.getElementById('profile-display-email')){ document.getElementById('profile-display-email').innerText = userEmail; }
-              const authView = document.getElementById('auth-view');
-              authView.classList.add('hidden');
-              authView.style.display = 'none';
-              loadCurrencyData();
-              fetchPendingData();
-              startRealtimePolling();
-          }
-      }
+    const isLoggedIn = localStorage.getItem('isLoggedIn');
+    if (isLoggedIn === 'true') {
+        const userName = localStorage.getItem('userName') || 'Pengguna';
+        const userEmail = localStorage.getItem('userEmail') || 'email@terverifikasi.com';
+        document.getElementById('display-user-name').innerText = userName;
+        if (document.getElementById('profile-display-name')) { document.getElementById('profile-display-name').innerText = userName; }
+        if (document.getElementById('profile-display-email')) { document.getElementById('profile-display-email').innerText = userEmail; }
+        const authView = document.getElementById('auth-view');
+        authView.classList.add('hidden');
+        authView.style.display = 'none';
+        loadCurrencyData();
+        fetchPendingData();
+        startRealtimePolling();
+    }
+}
 
 function switchTab(tab) {
           const homePage = document.getElementById('main-home-page');
@@ -2703,9 +2764,14 @@ function switchTab(tab) {
               return;
           }
 
-          const loadingMsg = '<div style="text-align:center; padding: 2.5rem 1rem; color: #64748b;"><i class="fa-solid fa-circle-notch fa-spin fa-2x"></i><p style="margin-top:0.75rem; font-size:0.9rem;">Memuat data transaksi realtime...</p></div>';
-          if(containerRiwayat) containerRiwayat.innerHTML = loadingMsg;
-          if(containerAktif) containerAktif.innerHTML = loadingMsg;
+          // ANTI-FLICKER: Bypass animasi loading spinner jika kontainer sudah memiliki render sebelumnya
+          const isRiwayatEmpty = !containerRiwayat || containerRiwayat.innerHTML.trim() === '' || containerRiwayat.innerHTML.includes('fa-lock');
+          
+          if (isRiwayatEmpty) {
+              const loadingMsg = '<div style="text-align:center; padding: 2.5rem 1rem; color: #64748b;"><i class="fa-solid fa-circle-notch fa-spin fa-2x"></i><p style="margin-top:0.75rem; font-size:0.9rem;">Memuat data transaksi realtime...</p></div>';
+              if(containerRiwayat) containerRiwayat.innerHTML = loadingMsg;
+              if(containerAktif) containerAktif.innerHTML = loadingMsg;
+          }
 
           try {
               const formData = new URLSearchParams();
@@ -2715,21 +2781,29 @@ function switchTab(tab) {
               const response = await fetch(GAS_URL, { method: 'POST', body: formData });
               const result = await response.json();
 
-              if (result.status === 'success' && result.data && result.data.length > 0) {
-                  renderTransactionLists(result.data);
-              } else {
-                  const emptyMsg = '<div style="text-align:center; padding: 3rem 1rem; color: #94a3b8;"><i class="fa-solid fa-folder-open" style="font-size: 2.5rem; margin-bottom: 0.75rem; color:#cbd5e1;"></i><p style="margin:0; font-weight:600;">Belum Ada Transaksi</p><p style="font-size:0.8rem; margin-top:4px;">Riwayat transaksi Anda akan muncul di sini.</p></div>';
-                  if(containerRiwayat) containerRiwayat.innerHTML = emptyMsg;
-                  if(containerAktif) containerAktif.innerHTML = emptyMsg;
+              if (result.status === 'success' && result.data) {
+                  const newDataHash = JSON.stringify(result.data);
+                  
+                  // Merender ulang layar HANYA jika ada data terbaru, mencegah layar berkedip akibat reload paksa
+                  if (window.lastTxDataHash !== newDataHash || isRiwayatEmpty) {
+                      window.lastTxDataHash = newDataHash;
+                      if (result.data.length > 0) {
+                          if(typeof renderTransactionLists === 'function') renderTransactionLists(result.data);
+                      } else {
+                          renderEmptyTransactions();
+                      }
+                  }
               }
           } catch (error) {
               console.error('Error fetching transactions:', error);
-              const errMsg = '<div style="text-align:center; padding: 2.5rem 1rem; color: #ef4444;"><i class="fa-solid fa-triangle-exclamation" style="font-size: 2rem; margin-bottom: 0.5rem;"></i><p>Gagal memuat data transaksi. Periksa koneksi internet Anda.</p></div>';
-              if(containerRiwayat) containerRiwayat.innerHTML = errMsg;
-              if(containerAktif) containerAktif.innerHTML = errMsg;
+              if (isRiwayatEmpty) {
+                  const errMsg = '<div style="text-align:center; padding: 2.5rem 1rem; color: #ef4444;"><i class="fa-solid fa-triangle-exclamation" style="font-size: 2rem; margin-bottom: 0.5rem;"></i><p>Gagal memuat data transaksi. Periksa koneksi internet Anda.</p></div>';
+                  if(containerRiwayat) containerRiwayat.innerHTML = errMsg;
+                  if(containerAktif) containerAktif.innerHTML = errMsg;
+              }
           }
       }
-
+      
       function formatTxDate(dateStr) {
           if (!dateStr) return '-';
           let dateObj = new Date(dateStr);
@@ -3780,13 +3854,19 @@ function switchTab(tab) {
           document.getElementById('currency-dropdown-container-jual').classList.remove('dropdown-open');
       }
 
+     // --- MULAI SCRIPT YANG DIPERBARUI (JS) ---
+      let isTxProcessing = false;
+
       async function prosesLanjutTransaksi() {
+          if (isTxProcessing) return; 
+
           const inputVal = document.getElementById('input-nominal').value;
           const rawNominal = parseFloat(inputVal.replace(/\./g, '')) || 0;
           if (!inputVal || inputVal === '0' || rawNominal === 0) {
               showToast('Masukkan nominal transaksi terlebih dahulu!'); return;
           }
 
+          isTxProcessing = true;
           const btnTx = document.getElementById('btn-lanjut-tx');
           const originalText = btnTx.innerHTML;
           btnTx.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Memproses...';
@@ -3810,8 +3890,23 @@ function switchTab(tab) {
           formData.append('jumlahBayar', jumlahBayar);
           formData.append('estimasi', estimasi);
 
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 12000);
+
           try {
-              const response = await fetch(GAS_URL, { method: 'POST', body: formData });
+              const response = await fetch(GAS_URL, { 
+                  method: 'POST', 
+                  body: formData,
+                  signal: controller.signal
+              });
+              
+              clearTimeout(timeoutId);
+              
+              const contentType = response.headers.get("content-type");
+              if (!response.ok || (contentType && contentType.includes("text/html"))) {
+                  throw new Error("Server_Error");
+              }
+
               const result = await response.json();
               
               if(result.status === 'success') {
@@ -3821,17 +3916,32 @@ function switchTab(tab) {
               } else {
                   showToast(result.message || "Gagal menyimpan transaksi.");
               }
-          } catch (e) { showToast("Gagal terhubung ke server."); } 
-          finally { btnTx.innerHTML = originalText; btnTx.disabled = false; }
+          } catch (e) { 
+              if (e.name === 'AbortError') {
+                  showToast("Jaringan sibuk, transaksi dibatalkan otomatis.");
+              } else {
+                  showToast("Akses tidak dikenali atau terjadi kesalahan koneksi.");
+              }
+              // [TAMBAHAN] Menghapus data transaksi yang sudah terlanjur masuk jika terjadi koneksi timeout/error
+              hapusTransaksiNyangkut(username, jumlahBayar, 'Beli');
+          } 
+          finally { 
+              btnTx.innerHTML = originalText; 
+              btnTx.disabled = false; 
+              isTxProcessing = false; 
+          }
       }
 
       async function prosesLanjutTransaksiJual() {
+          if (isTxProcessing) return; 
+
           const inputVal = document.getElementById('input-nominal-jual').value;
           const rawNominal = parseFloat(inputVal.replace(/\./g, '')) || 0;
           if (!inputVal || inputVal === '0' || rawNominal === 0) {
               showToast('Masukkan nominal transaksi terlebih dahulu!'); return;
           }
 
+          isTxProcessing = true;
           const btnTx = document.getElementById('btn-lanjut-tx-jual');
           const originalText = btnTx.innerHTML;
           btnTx.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Memproses...';
@@ -3855,8 +3965,23 @@ function switchTab(tab) {
           formData.append('jumlahBayar', jumlahBayar);
           formData.append('estimasi', estimasi);
 
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 12000);
+
           try {
-              const response = await fetch(GAS_URL, { method: 'POST', body: formData });
+              const response = await fetch(GAS_URL, { 
+                  method: 'POST', 
+                  body: formData,
+                  signal: controller.signal
+              });
+              
+              clearTimeout(timeoutId);
+              
+              const contentType = response.headers.get("content-type");
+              if (!response.ok || (contentType && contentType.includes("text/html"))) {
+                  throw new Error("Server_Error");
+              }
+
               const result = await response.json();
               
               if(result.status === 'success') {
@@ -3866,10 +3991,37 @@ function switchTab(tab) {
               } else {
                   showToast(result.message || "Gagal menyimpan transaksi.");
               }
-          } catch (e) { showToast("Gagal terhubung ke server."); } 
-          finally { btnTx.innerHTML = originalText; btnTx.disabled = false; }
+          } catch (e) { 
+              if (e.name === 'AbortError') {
+                  showToast("Jaringan sibuk, transaksi dibatalkan otomatis.");
+              } else {
+                  showToast("Akses tidak dikenali atau terjadi kesalahan koneksi.");
+              }
+              // [TAMBAHAN] Menghapus data transaksi yang sudah terlanjur masuk jika terjadi koneksi timeout/error
+              hapusTransaksiNyangkut(username, jumlahBayar, 'Jual');
+          } 
+          finally { 
+              btnTx.innerHTML = originalText; 
+              btnTx.disabled = false;
+              isTxProcessing = false; 
+          }
       }
 
+      // [TAMBAHAN] Fungsi baru untuk menghapus otomatis transaksi yang menggantung
+      function hapusTransaksiNyangkut(username, jumlahBayar, kategori) {
+          const formData = new URLSearchParams();
+          formData.append('action', 'rollback_transaksi');
+          formData.append('username', username);
+          formData.append('jumlahBayar', jumlahBayar);
+          formData.append('kategori', kategori);
+          try {
+              fetch(GAS_URL, { method: 'POST', body: formData });
+          } catch(err) {
+              console.log('Gagal membatalkan transaksi nyangkut', err);
+          }
+      }
+      // --- SELESAI SCRIPT YANG DIPERBARUI (JS) ---
+      
       function openDetailPembayaranWithData(idPesanan, remainingSec) {
           const inputVal = document.getElementById('input-nominal').value;
           const rawNominal = parseFloat(inputVal.replace(/\./g, '')) || 0;
@@ -3904,39 +4056,83 @@ function switchTab(tab) {
           document.getElementById('page-detail-pembayaran').classList.add('open');
       }
 
-      function openDetailPembayaranWithDataJual(idPesanan, remainingSec) {
-          const inputVal = document.getElementById('input-nominal-jual').value;
-          const rawNominal = parseFloat(inputVal.replace(/\./g, '')) || 0;
-          const currencyCode = document.getElementById('selected-code-jual').innerText || '-';
-          const rateInfo = document.getElementById('info-rate-valas-jual').innerText || '-';
-          const bayarPrefix = document.getElementById('prefix-input-nominal-jual').innerText || '';
-          
-          let estimasiVal = document.getElementById('estimasi-diterima-jual').innerText || '-';
-          if (currencyCode === 'USD' || estimasiVal.toLowerCase().includes('rp')) {
-               let numericVal = parseFloat(estimasiVal.toString().replace(/[^0-9]/g, '')) || 0;
-               estimasiVal = 'Rp. ' + numericVal.toLocaleString('id-ID');
-          }
+     function openDetailPembayaranWithData(idPesanan, remainingSec) {
+    const inputVal = document.getElementById('input-nominal').value;
+    const rawNominal = parseFloat(inputVal.replace(/\./g, '')) || 0;
+    const currencyCode = document.getElementById('selected-code').innerText || '-';
+    const rateInfo = document.getElementById('info-rate-valas').innerText || '-';
+    const bayarPrefix = document.getElementById('prefix-input-nominal').innerText || '';
+    
+    let estimasiVal = document.getElementById('estimasi-diterima').innerText || '-';
+    if (currencyCode === 'IDR' || estimasiVal.toLowerCase().includes('rp')) {
+        let numericVal = parseFloat(estimasiVal.toString().replace(/[^0-9]/g, '')) || 0;
+        estimasiVal = 'Rp. ' + numericVal.toLocaleString('id-ID');
+    }
+    
+    document.getElementById('det-mata-uang').innerText = currencyCode;
+    document.getElementById('det-rate').innerText = rateInfo;
+    document.getElementById('det-diterima').innerText = estimasiVal;
+    document.getElementById('det-nominal').innerText = `${bayarPrefix} ${inputVal}`;
+    
+    // --- PERUBAHAN BIAYA ADMIN DINAMIS ---
+    let adminFee = 0;
+    let totalBayar = 0;
+    
+    if (bayarPrefix === '$') {
+        adminFee = getBiayaLayananDynamic('USD'); // Mengambil dari sheet
+        totalBayar = rawNominal + adminFee;
+        document.getElementById('det-admin').innerText = `$ ${adminFee.toFixed(2)}`;
+        document.getElementById('det-total').innerText = `$ ${totalBayar.toLocaleString('en-US', {minimumFractionDigits:2})}`;
+    } else {
+        adminFee = getBiayaLayananDynamic('IDR'); // Mengambil dari sheet
+        totalBayar = rawNominal + adminFee;
+        document.getElementById('det-admin').innerText = `Rp ${adminFee.toLocaleString('id-ID')}`;
+        document.getElementById('det-total').innerText = `Rp ${totalBayar.toLocaleString('id-ID')}`;
+    }
+    
+    document.getElementById('det-trx-id').innerText = `Trx ID: ${idPesanan}`;
+    activeExpirations[idPesanan] = remainingSec || 900;
+    document.getElementById('page-detail-pembayaran').classList.add('open');
+}
 
-          document.getElementById('det-mata-uang').innerText = currencyCode;
-          document.getElementById('det-rate').innerText = rateInfo;
-          document.getElementById('det-diterima').innerText = estimasiVal;
-          document.getElementById('det-nominal').innerText = `${bayarPrefix} ${inputVal}`;
-          
-          let adminFee = 0; let totalBayar = 0;
-          if (bayarPrefix === '$') {
-              adminFee = 0.50; totalBayar = rawNominal + adminFee;
-              document.getElementById('det-admin').innerText = `$ ${adminFee.toFixed(2)}`;
-              document.getElementById('det-total').innerText = `$ ${totalBayar.toLocaleString('en-US', {minimumFractionDigits:2})}`;
-          } else {
-              adminFee = 2500; totalBayar = rawNominal + adminFee;
-              document.getElementById('det-admin').innerText = `Rp ${adminFee.toLocaleString('id-ID')}`;
-              document.getElementById('det-total').innerText = `Rp ${totalBayar.toLocaleString('id-ID')}`;
-          }
-          document.getElementById('det-trx-id').innerText = `Trx ID: ${idPesanan}`;
-          
-          activeExpirations[idPesanan] = remainingSec || 900; 
-          document.getElementById('page-detail-pembayaran').classList.add('open');
-      }
+function openDetailPembayaranWithDataJual(idPesanan, remainingSec) {
+    const inputVal = document.getElementById('input-nominal-jual').value;
+    const rawNominal = parseFloat(inputVal.replace(/\./g, '')) || 0;
+    const currencyCode = document.getElementById('selected-code-jual').innerText || '-';
+    const rateInfo = document.getElementById('info-rate-valas-jual').innerText || '-';
+    const bayarPrefix = document.getElementById('prefix-input-nominal-jual').innerText || '';
+    
+    let estimasiVal = document.getElementById('estimasi-diterima-jual').innerText || '-';
+    if (currencyCode === 'USD' || estimasiVal.toLowerCase().includes('rp')) {
+        let numericVal = parseFloat(estimasiVal.toString().replace(/[^0-9]/g, '')) || 0;
+        estimasiVal = 'Rp. ' + numericVal.toLocaleString('id-ID');
+    }
+    
+    document.getElementById('det-mata-uang').innerText = currencyCode;
+    document.getElementById('det-rate').innerText = rateInfo;
+    document.getElementById('det-diterima').innerText = estimasiVal;
+    document.getElementById('det-nominal').innerText = `${bayarPrefix} ${inputVal}`;
+    
+    // --- PERUBAHAN BIAYA ADMIN DINAMIS ---
+    let adminFee = 0;
+    let totalBayar = 0;
+    
+    if (bayarPrefix === '$') {
+        adminFee = getBiayaLayananDynamic('USD'); // Mengambil dari sheet
+        totalBayar = rawNominal + adminFee;
+        document.getElementById('det-admin').innerText = `$ ${adminFee.toFixed(2)}`;
+        document.getElementById('det-total').innerText = `$ ${totalBayar.toLocaleString('en-US', {minimumFractionDigits:2})}`;
+    } else {
+        adminFee = getBiayaLayananDynamic('IDR'); // Mengambil dari sheet
+        totalBayar = rawNominal + adminFee;
+        document.getElementById('det-admin').innerText = `Rp ${adminFee.toLocaleString('id-ID')}`;
+        document.getElementById('det-total').innerText = `Rp ${totalBayar.toLocaleString('id-ID')}`;
+    }
+    
+    document.getElementById('det-trx-id').innerText = `Trx ID: ${idPesanan}`;
+    activeExpirations[idPesanan] = remainingSec || 900;
+    document.getElementById('page-detail-pembayaran').classList.add('open');
+}
 
       async function executeBatalPesanan() {
           closeCancelModal();
@@ -4060,6 +4256,26 @@ function switchTab(tab) {
                       showToast('Pembayaran Anda berhasil dikonfirmasi!', 'success');
                       delete activeExpirations[activeTxId];
                       activeTxId = "";
+                      
+                      // --- TAMBAHAN RESET FORM UPLOAD BUKTI PEMBAYARAN ---
+const fileInput = document.getElementById('file-upload-input');
+if (fileInput) {
+    fileInput.value = '';
+}
+
+// Mengembalikan teks label ke awal
+const uploadLabel = document.getElementById('upload-text-label');
+if (uploadLabel) {
+    uploadLabel.innerText = 'Ketuk untuk upload struk';
+}
+
+// Mengembalikan icon ke awal
+const uploadIcon = document.getElementById('upload-icon');
+if (uploadIcon) {
+    uploadIcon.className = 'fa-solid fa-cloud-arrow-up';
+    uploadIcon.style.color = '';
+}
+                      
                       setTimeout(() => {
                           closeAllToHome();
                           fetchPendingData();
